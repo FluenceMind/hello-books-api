@@ -23,20 +23,26 @@ def create_book():
 
 @books_bp.get("")
 def get_all_books():
-    query = db.select(Book).order_by(Book.id)
-    books = db.session.scalars(query)
-    # We could also write the line above as:
-    # books = db.session.execute(query).scalars()
+    query = db.select(Book)
 
-    books_response = []
-    for book in books:
-        books_response.append(
-            {
-                "id": book.id,
-                "title": book.title,
-                "description": book.description
-            }
-        )
+    title_param = request.args.get("title")
+    if title_param:
+        query = query.where(Book.title.ilike(f"%{title_param}%"))
+
+    description_param = request.args.get("description")
+    if description_param:
+        query = query.where(Book.description.ilike(f"%{description_param}%"))
+
+    books = db.session.scalars(query.order_by(Book.id))
+
+    books_response = [
+        {
+            "id": book.id,
+            "title": book.title,
+            "description": book.description
+        }
+        for book in books
+    ]
     return books_response
 
 @books_bp.get("/<book_id>")
