@@ -6,7 +6,18 @@ class Book(db.Model):
     title: Mapped[str]
     description: Mapped[str]
 
+    @classmethod
+    def from_dict(cls, data: dict):
+        # ожидаем ключи "title" и "description"; KeyError пробрасывается наружу
+        return cls(title=data["title"], description=data["description"])
 
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "title": self.title,
+            "description": self.description,
+        }
+    
 
 
 
