@@ -1,23 +1,37 @@
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy import ForeignKey
+from typing import Optional, TYPE_CHECKING
 from ..db import db
+
+if TYPE_CHECKING:
+    from .author import Author
 
 class Book(db.Model):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     title: Mapped[str]
     description: Mapped[str]
+    author_id: Mapped[Optional[int]] = mapped_column(ForeignKey("author.id"))
+    author: Mapped[Optional["Author"]] = relationship(back_populates="books")
 
-    @classmethod
-    def from_dict(cls, data: dict):
-        # ожидаем ключи "title" и "description"; KeyError пробрасывается наружу
-        return cls(title=data["title"], description=data["description"])
-
-    def to_dict(self) -> dict:
-        return {
+    def to_dict(self):
+        book_as_dict = {
             "id": self.id,
             "title": self.title,
-            "description": self.description,
+            "description": self.description
         }
-    
+        if self.author:
+            book_as_dict["author"] = self.author.name
+        return book_as_dict
+
+    @classmethod
+    def from_dict(cls, book_data: dict):
+        author_id = book_data.get("author_id")
+        new_book = cls(
+            title=book_data["title"],
+            description=book_data["description"],
+            author_id=author_id
+        )
+        return new_book
 
 
 
